@@ -1,0 +1,14 @@
+[0m[[0m[0mdebug[0m] [0m[0m> Exec(run, Some(1029c2f0-c153-47cf-bed7-87c1b8b33f6c), Some(CommandSource(console0)))[0m
+[0m[[0m[0mdebug[0m] [0m[0mEvaluating tasks: Compile / run[0m
+[0m[[0m[0mdebug[0m] [0m[0mRunning task... Cancel: Signal, check cycles: false, forcegc: true[0m
+[0m[[0m[0minfo[0m] [0m[0mcompiling 1 Scala source to /home/scharmi/Scala/wiki-scraper/target/scala-2.13/classes ...[0m
+[0m[[0m[31merror[0m] [0m[0m/home/scharmi/Scala/wiki-scraper/src/main/scala/Main.scala:18:24: not found: value AsyncHttpClientFutureBackend[0m
+[0m[[0m[31merror[0m] [0m[0mimplicit val backend = AsyncHttpClientFutureBackend();[0m
+[0m[[0m[31merror[0m] [0m[0m                       ^[0m
+[0m[[0m[31merror[0m] [0m[0m/home/scharmi/Scala/wiki-scraper/src/main/scala/Main.scala:20:40: No implicit Ordering[sttp.client4.Response[String]] found to build a SortedSet[sttp.client4.Response[String]]. You may want to upcast to a Set[Value] first by calling `unsorted`.[0m
+[0m[[0m[31merror[0m] [0m[0mval requests = GreekPlanets.values.map { planet =>[0m
+[0m[[0m[31merror[0m] [0m[0m                                       ^[0m
+[0m[[0m[31merror[0m] [0m[0mtwo errors found[0m
+[0m[[0m[31merror[0m] [0m[0m(Compile / [31mcompileIncremental[0m) Compilation failed[0m
+[0m[[0m[31merror[0m] [0m[0mTotal time: 0 s, completed 24 May 2023, 00:44:32[0m
+[0m[[0m[0mdebug[0m] [0m[0m> Exec(shell, None, None)[0m

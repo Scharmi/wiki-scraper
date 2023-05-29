@@ -6,94 +6,52 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.io.StdIn.readLine
 import java.io.File
 import java.io.FileWriter
+import scala.io.Source
+import java.io.File
+import scala.concurrent.Await
 import scala.concurrent.Future
+import scala.concurrent.duration._
+
 
 class WayFinder(val startUrl: String, val endUrl: String, val urlPrefix: String, val outputPath: FileWriter, val isLast: Boolean = false) {
     private val edgeMap = Map[String, List[String]]();
     private val distanceMap = Map[String, Int]();
     private val visited = Set[String]();
-    def startBfs(): Unit = {
-        val distanceUrls = Set(startUrl);
-        bfs(startUrl, endUrl, distanceUrls, distanceMap, edgeMap, visited, 0);
+    private var completedRequests = 0;
+    def dfsWrapper(maxDepth: Int = 0): Unit = {
+        dfs(startUrl, endUrl, List(startUrl), 0, maxDepth, outputPath, urlPrefix) match {
+            case false => 
+                dfsWrapper(maxDepth + 1)
+            case true =>
+        }
     }
-    def findWays(
-        startUrl: String, 
-        endUrl: String, 
-        edgeMap: Map[String, List[String]], 
-        visited: Set[String], 
-        currentWay: List[String], 
-        distance: Int, 
-        maxDistance: Int):(Boolean, List[List[String]]) = {
-            if(!edgeMap.contains(startUrl)) {
-                return (false, List());
-            }
-            val toVisit = edgeMap(startUrl).filter(!visited.contains(_));
-            if(distance > maxDistance) {
-                return (false, List());
-            }
-            if(toVisit.contains(endUrl)) {
-                return (true, List(currentWay :+ startUrl :+ endUrl));
-            }
-            val newVisited = visited ++ toVisit;
-            val newDistance = distance + 1;
-            val newCurrentWay = currentWay :+ startUrl;
-            val ways = toVisit.map(findWays(_, endUrl, edgeMap, newVisited, newCurrentWay, newDistance, maxDistance));
-            val waysFiltered = ways.filter(_._1);
-            val waysFilteredFlattened = waysFiltered.flatMap(_._2);
-            return (waysFilteredFlattened.nonEmpty, waysFilteredFlattened);
-    }
-    def bfs(
-        startUrl: String, 
-        endUrl: String, 
-        distanceUrls: Set[String], 
-        distanceMap: Map[String, Int], 
-        edgeMap: Map[String, List[String]], 
-        visited: Set[String], 
-        distance: Int
-        ): Unit = {
-            println(distance)
-                if(distanceUrls.contains(endUrl)) {
-                    println("Found");
-                    val ways = findWays(startUrl, endUrl, edgeMap, Set(), List(), 0, distance)._2;
-                    for(way <- ways) {
-                        outputPath.write("(");
-                        for(url <- way) {
-                            if(url != way.last)
-                            outputPath.write(Parser.makeTitleFromLink(url) + " ,");
-                            else
-                            outputPath.write(Parser.makeTitleFromLink(url));
-                        }
-                        outputPath.write(")\n");
-                    }
-                    if(isLast) {
-                        outputPath.close();
-                    }
-                    return;
-                }
-                if(distance > 3){
-                    if(isLast) {
-                        outputPath.write("No way\n");
-                        outputPath.close();
-                    }
-                    return;
-                }
-                
-            val distanceUrlsList = distanceUrls.toList;
-            val promises = Scraper.getPagePromises(distanceUrlsList);
-            val content = Scraper.getBodyPromises(promises);
-            val inverseContent = Future.sequence(content);
-            inverseContent onComplete {
-                case scala.util.Success(value) => {
-                    val valueChecked = value.filter(_.isRight).map(_.right.get);
-                    val linkBodyTuple = distanceUrlsList.zip(valueChecked);
-                    val (newMap, linkList) = Parser.GetLinksFromBodyList(linkBodyTuple, urlPrefix, edgeMap);
-                    val newDistanceUrls = linkList.filter(!visited.contains(_));
-                    val newDistanceMap = distanceMap ++ newDistanceUrls.map((_, distance));
-                    val newVisited = visited ++ newDistanceUrls;
-                    bfs(startUrl, endUrl, newDistanceUrls.toSet, newDistanceMap, newMap, newVisited, distance + 1);
-                }
-                case scala.util.Failure(exception) => {}//println(exception)
-            }
 
+    def dfs(
+        startUrl: String,
+        endUrl: String,
+        currentPath: List[String],
+        currentDepth: Int,
+        maxDepth: Int,
+        outputPath: FileWriter,
+        urlPrefix: String
+    ): Boolean = {
+    if (startUrl == endUrl) {
+        outputPath.write(currentPath.map(Parser.makeTitleFromLink(_)).mkString("(", ", ", ") "))
+        true
+    } else if (currentDepth >= maxDepth) {
+        false
+    } else {
+        val toVisit = Parser.getLinksFromBody(Scraper.getPage(startUrl), urlPrefix)
+        val toVisitFiltered = toVisit.toSet.toList
+        var found = false
+        for(url <- toVisitFiltered) {
+            if(url != startUrl) {
+                if (dfs(url, endUrl, currentPath :+ url, currentDepth + 1, maxDepth, outputPath, urlPrefix)) {
+                    found = true
+                }
+            }
+        }
+        found
+    }
     }
 }
